@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DibruNest - Find Rent Rooms in Dibrugarh</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Minimal Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white shadow-sm shadow-teal-600/30">
+          <i data-lucide="home" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="text-xl font-bold tracking-tight text-slate-900">Dibru<span class="text-teal-600">Nest</span></span>
+          <span class="text-[10px] block font-medium text-slate-400 -mt-1 tracking-wider uppercase">Dibrugarh Room Finder</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="wishlistNavBtn" onclick="toggleSavedFilter()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition">
+          <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
+          <span>Saved (<span id="savedCount">0</span>)</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Search Container -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    
+    <!-- Clean Search & Filter Card -->
+    <section class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+        <!-- Keyword / Locality Search -->
+        <div class="md:col-span-4 relative">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search Location / Keyword</label>
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="searchInput" placeholder="e.g. Maijan, AMCH, Boiragimoth, 1 BHK..." 
+              class="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+          </div>
+        </div>
+
+        <!-- Room Type Dropdown -->
+        <div class="md:col-span-3">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Room Type</label>
+          <select id="typeSelect" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+            <option value="all">All Room Types</option>
+            <option value="1 BHK">1 BHK Apartment / Flat</option>
+            <option value="Single Room">Single Room</option>
+            <option value="2 BHK">2 BHK House</option>
+            <option value="PG / Hostel">PG / Hostel with Food</option>
+          </select>
+        </div>
+
+        <!-- Tenant Type Dropdown -->
+        <div class="md:col-span-3">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tenant Suitability</label>
+          <select id="tenantSelect" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+            <option value="all">Any Tenant (All)</option>
+            <option value="Bachelor / Anyone">Bachelor / Anyone</option>
+            <option value="Students / Medicos">Students / Medicos</option>
+            <option value="Family / Working">Family / Working</option>
+            <option value="Girls Only">Girls Only</option>
+          </select>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="md:col-span-2 flex items-end">
+          <button onclick="resetFilters()" class="w-full py-2 px-3 text-sm font-semibold rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition flex items-center justify-center gap-1.5">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Price Range Slider -->
+      <div class="pt-2 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <span class="font-semibold text-slate-700 whitespace-nowrap">Max Rent:</span>
+          <span id="priceLabel" class="font-bold text-teal-600 text-sm">₹15,000 / month</span>
+        </div>
+        <input type="range" id="priceSlider" min="2000" max="20000" step="500" value="20000"
+          class="w-full sm:max-w-xs accent-teal-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+      </div>
+    </section>
+
+    <!-- Results Count Bar -->
+    <div class="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
+      <span id="resultsCount">Showing rooms in Dibrugarh</span>
+      <div class="flex items-center gap-1.5">
+        <span>Sort:</span>
+        <select id="sortSelect" onchange="applyFilters()" class="bg-transparent border-0 font-semibold text-slate-700 focus:outline-none cursor-pointer">
+          <option value="featured">Featured First</option>
+          <option value="low">Rent: Low to High</option>
+          <option value="high">Rent: High to Low</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Listings Grid -->
+    <div id="roomGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
+      <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 mb-3">
+        <i data-lucide="search-x" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-800">No rooms match your filter</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Try widening your budget, changing the location, or clicking reset.</p>
+      <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+        Reset All Filters
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full overflow-hidden relative my-auto animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Close Button -->
+      <button onclick="closeModal()" class="absolute right-3 top-3 z-10 w-8 h-8 rounded-full bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <!-- Main Photo Display with Navigation Arrows -->
+      <div class="relative bg-slate-900 h-72 sm:h-80 w-full overflow-hidden group">
+        <img id="modalMainImg" src="" alt="Room detail" class="w-full h-full object-cover transition-opacity duration-200">
+        
+        <!-- Locality Badge & Photo Counter -->
+        <div class="absolute bottom-3 left-3 flex items-center gap-2">
+          <div class="bg-slate-900/80 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-md font-medium" id="modalLocalityBadge">
+            Locality
+          </div>
+          <div class="bg-slate-900/80 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-md font-medium" id="modalPhotoCounter">
+            Photo 1 of 5
+          </div>
+        </div>
+
+        <!-- Carousel Arrows -->
+        <button id="modalPrevBtn" onclick="prevModalPhoto(event)" class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center transition shadow-lg">
+          <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </button>
+        <button id="modalNextBtn" onclick="nextModalPhoto(event)" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center transition shadow-lg">
+          <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Visual Thumbnail Switcher Strip with Real Mini Photos -->
+      <div class="p-3 bg-slate-100 border-b border-slate-200">
+        <p class="text-[11px] font-semibold text-slate-500 mb-2 flex items-center gap-1">
+          <i data-lucide="images" class="w-3.5 h-3.5 text-teal-600"></i> Click any photo to view:
+        </p>
+        <div id="modalThumbnails" class="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1">
+          <!-- Injected dynamically with actual image previews -->
+        </div>
+      </div>
+
+      <!-- Modal Content Body -->
+      <div class="p-5 sm:p-6 space-y-4 max-h-[50vh] overflow-y-auto">
+        
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 id="modalTitle" class="text-lg sm:text-xl font-bold text-slate-900 leading-snug">Room Title</h2>
+            <p id="modalAddress" class="text-xs text-slate-500 flex items-center gap-1 mt-1">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-teal-600 shrink-0"></i>
+              <span>Address line</span>
+            </p>
+          </div>
+          <div class="text-right shrink-0">
+            <span id="modalRent" class="text-xl sm:text-2xl font-extrabold text-teal-600">₹0</span>
+            <span class="text-xs text-slate-400 block -mt-1">/ month</span>
+          </div>
+        </div>
+
+        <!-- Quick Spec Badges -->
+        <div class="grid grid-cols-3 gap-2 text-center py-2 bg-slate-50 rounded-xl border border-slate-200/80">
+          <div class="p-1">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Property</span>
+            <span id="modalType" class="text-xs font-bold text-slate-800">1 BHK</span>
+          </div>
+          <div class="p-1 border-x border-slate-200">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Preferred</span>
+            <span id="modalTenant" class="text-xs font-bold text-slate-800">Anyone</span>
+          </div>
+          <div class="p-1">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Deposit</span>
+            <span id="modalDeposit" class="text-xs font-bold text-slate-800">1 Month</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Details & Amenities</h4>
+          <p id="modalDesc" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+        </div>
+
+        <!-- Feature Tags -->
+        <div id="modalTags" class="flex flex-wrap gap-1.5 pt-1">
+          <!-- Injected tags -->
+        </div>
+
+        <!-- Important Notes / Charges -->
+        <div id="modalNotesBox" class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+          <i data-lucide="info" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+          <span id="modalNotesText">Electricity extra as per meter reading.</span>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer CTA -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex gap-2">
+        <a id="modalWhatsappBtn" href="#" target="_blank" class="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          WhatsApp Owner
+        </a>
+        <a id="modalCallBtn" href="#" class="flex-1 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm">
+          <i data-lucide="phone" class="w-4 h-4"></i>
+          Call Directly
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+    <p>© 2026 DibruNest • Direct Rent Rooms in Dibrugarh, Assam</p>
+  </footer>
+
+  <script>
+    // --- LISTINGS DATA ---
+    const roomsData = [
+      {
+        id: "overbridge-aditya-2bhk",
+        title: "2 BHK Unfurnished Ground Floor near Over-Bridge",
+        locality: "Over-Bridge",
+        address: "Exact opposite of Aditya Polyclinic, 2-3 mins walk from main road, Dibrugarh",
+        rent: 8000,
+        deposit: "₹8,000 (Negotiable)",
+        type: "2 BHK",
+        tenant: "Family / Working",
+        verified: true,
+        featured: true,
+        ownerPhone: "9435683974",
+        notes: "Ground floor unit. Rent is negotiable. All daily amenities within 2-3 mins walking distance.",
+        image: "https://imgh.in/host/i9zrsh",
+        gallery: [
+          { url: "https://imgh.in/host/i9zrsh", label: "Main Room" },
+          { url: "https://imgh.in/host/krccyz", label: "Room View 2" },
+          { url: "https://imgh.in/host/xkz423", label: "Kitchen Area" },
+          { url: "https://imgh.in/host/82uuv6", label: "Kitchen & Washroom Space" },
+          { url: "https://imgh.in/host/ohtsxx", label: "Bathroom" }
+        ],
+        tags: ["Ground Floor", "Negotiable Rent", "Near Aditya Polyclinic", "Opposite Over-Bridge", "Main Road Walkable"],
+        desc: "2 BHK unfurnished flat on the ground floor located just opposite Aditya Polyclinic near the over-bridge. Only 2 to 3 minutes walking distance from the main road with pharmacies, daily markets, and transport nearby."
+      },
+      {
+        id: "maijan-1bhk",
+        title: "1 BHK with Attached Kitchen & Bathroom",
+        locality: "Maijan",
+        address: "Near AMCH (1 km distance), Maijan, Dibrugarh",
+        rent: 6500,
+        deposit: "₹6,500 (1 Month)",
+        type: "1 BHK",
+        tenant: "Bachelor / Anyone",
+        verified: true,
+        featured: false,
+        ownerPhone: "8134886120",
+        notes: "Only genuine & urgent clients preferred. Electric bill extra. Broker associate charge applies.",
+        image: "https://i.ibb.co/gZCDyCj4/room.jpg",
+        gallery: [
+          { url: "https://i.ibb.co/gZCDyCj4/room.jpg", label: "Main Room" },
+          { url: "https://i.ibb.co/XZVWWJR5/bathroom.jpg", label: "Western Washroom" },
+          { url: "https://i.ibb.co/bgPttZTP/kitchen.jpg", label: "Kitchen Counter" },
+          { url: "https://i.ibb.co/QFPYwBr5/kitchen2.jpg", label: "Kitchen Angle 2" },
+          { url: "https://i.ibb.co/1YFzsgKH/kitchen3.jpg", label: "Kitchen Angle 3" }
+        ],
+        tags: ["24x7 Water Running", "Western Toilet", "Attached Kitchen", "Near AMCH", "Tiled Floor"],
+        desc: "Newly constructed, well-ventilated 1 BHK property with a clean kitchen counter, sink with water connection, and an attached modern western bathroom with wall tiles and jet spray. Perfect for medicos, hospital staff, or small families. Constant 24x7 running water supply."
+      },
+      {
+        id: "du-rajabheta-single",
+        title: "Spacious Single Room near DU Gate 2",
+        locality: "Rajabheta",
+        address: "Lane 3, Behind Dibrugarh University Gate 2",
+        rent: 3200,
+        deposit: "₹3,200",
+        type: "Single Room",
+        tenant: "Students / Medicos",
+        verified: true,
+        featured: false,
+        ownerPhone: "9854012345",
+        notes: "Electricity included. Silent study atmosphere. No smoking.",
+        image: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=700&q=80",
+        gallery: [
+          { url: "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=700&q=80", label: "Room" },
+          { url: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=700&q=80", label: "Washroom" }
+        ],
+        tags: ["Walk to DU", "Free Water", "Quiet Area", "Single Bed Provided"],
+        desc: "Ideal for Dibrugarh University postgraduate or PhD students. Quiet environment, 5-minute walk from DU Gate 2, separate sub-meter, running water and secure compound."
+      },
+      {
+        id: "boiragimoth-2bhk",
+        title: "2 BHK Family Floor near Chowkidinghee",
+        locality: "Boiragimoth",
+        address: "Near Boiragimoth Namghar, Dibrugarh",
+        rent: 9500,
+        deposit: "₹10,000",
+        type: "2 BHK",
+        tenant: "Family / Working",
+        verified: true,
+        featured: false,
+        ownerPhone: "9435012345",
+        notes: "Car parking available inside compound. 2-wheeler shade provided.",
+        image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=700&q=80",
+        gallery: [
+          { url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=700&q=80", label: "Hall" },
+          { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=700&q=80", label: "Bedroom" }
+        ],
+        tags: ["Car Parking", "2 Balconies", "24x7 Water", "Safe Residential"],
+        desc: "Spacious first-floor 2 BHK apartment with balcony, modular kitchen setup, marble finishing, inverter backup line, and car parking inside the gated boundary."
+      },
+      {
+        id: "amc-barbari-pg",
+        title: "Student & Medico PG with Assamese Mess",
+        locality: "Barbari",
+        address: "AMCH Main Gate Road, Barbari, Dibrugarh",
+        rent: 5500,
+        deposit: "₹2,000",
+        type: "PG / Hostel",
+        tenant: "Students / Medicos",
+        verified: true,
+        featured: false,
+        ownerPhone: "8876012345",
+        notes: "Rent includes 3 daily homecooked meals (Rice, Dal, Veg/Fish/Egg). High speed Wi-Fi.",
+        image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=700&q=80",
+        gallery: [
+          { url: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=700&q=80", label: "Room" },
+          { url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=700&q=80", label: "Dining" }
+        ],
+        tags: ["Mess Food Included", "Wi-Fi", "Daily Cleaning", "Inverter"],
+        desc: "Very close to Assam Medical College. Hygienic Assamese food served 3 times daily. Filtered drinking water, study table, bed, mattress, and power backup."
+      }
+    ];
+
+    // --- STATE MANAGEMENT ---
+    let savedListings = JSON.parse(localStorage.getItem('dibrunest_saved') || '[]');
+    let showSavedOnly = false;
+
+    // --- DOM REFERENCES ---
+    const roomGrid = document.getElementById('roomGrid');
+    const emptyState = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const typeSelect = document.getElementById('typeSelect');
+    const tenantSelect = document.getElementById('tenantSelect');
+    const priceSlider = document.getElementById('priceSlider');
+    const priceLabel = document.getElementById('priceLabel');
+    const sortSelect = document.getElementById('sortSelect');
+    const resultsCount = document.getElementById('resultsCount');
+    const savedCountEl = document.getElementById('savedCount');
+
+    // Update Saved Counter
+    function updateSavedCounter() {
+      savedCountEl.textContent = savedListings.length;
+    }
+
+    function toggleSave(id, event) {
+      if (event) event.stopPropagation();
+      if (savedListings.includes(id)) {
+        savedListings = savedListings.filter(item => item !== id);
+      } else {
+        savedListings.push(id);
+      }
+      localStorage.setItem('dibrunest_saved', JSON.stringify(savedListings));
+      updateSavedCounter();
+      applyFilters();
+    }
+
+    function toggleSavedFilter() {
+      showSavedOnly = !showSavedOnly;
+      const navBtn = document.getElementById('wishlistNavBtn');
+      if (showSavedOnly) {
+        navBtn.classList.add('bg-rose-50', 'border-rose-300', 'text-rose-700');
+      } else {
+        navBtn.classList.remove('bg-rose-50', 'border-rose-300', 'text-rose-700');
+      }
+      applyFilters();
+    }
+
+    // --- FILTER & RENDER ENGINE ---
+    function applyFilters() {
+      const query = searchInput.value.toLowerCase().trim();
+      const selectedType = typeSelect.value;
+      const selectedTenant = tenantSelect.value;
+      const maxRent = parseInt(priceSlider.value, 10);
+      const sortBy = sortSelect.value;
+
+      priceLabel.textContent = `₹${maxRent.toLocaleString('en-IN')} / month`;
+
+      let filtered = roomsData.filter(room => {
+        if (showSavedOnly && !savedListings.includes(room.id)) return false;
+        if (room.rent > maxRent) return false;
+        if (selectedType !== 'all' && room.type !== selectedType) return false;
+        if (selectedTenant !== 'all' && room.tenant !== selectedTenant && room.tenant !== 'Bachelor / Anyone') return false;
+
+        if (query) {
+          const matchLocality = room.locality.toLowerCase().includes(query);
+          const matchAddress = room.address.toLowerCase().includes(query);
+          const matchTitle = room.title.toLowerCase().includes(query);
+          const matchTags = room.tags.some(t => t.toLowerCase().includes(query));
+          if (!matchLocality && !matchAddress && !matchTitle && !matchTags) return false;
+        }
+
+        return true;
+      });
+
+      // Sort
+      if (sortBy === 'low') {
+        filtered.sort((a, b) => a.rent - b.rent);
+      } else if (sortBy === 'high') {
+        filtered.sort((a, b) => b.rent - a.rent);
+      } else {
+        // Featured first
+        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+      }
+
+      renderListings(filtered);
+    }
+
+    function renderListings(items) {
+      roomGrid.innerHTML = '';
+
+      if (items.length === 0) {
+        emptyState.classList.remove('hidden');
+        resultsCount.textContent = '0 rooms found';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      resultsCount.textContent = `Showing ${items.length} ${items.length === 1 ? 'room' : 'rooms'} in Dibrugarh`;
+
+      items.forEach(room => {
+        const isSaved = savedListings.includes(room.id);
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition group cursor-pointer flex flex-col";
+        card.onclick = () => openModal(room.id);
+
+        card.innerHTML = `
+          <div class="relative h-48 sm:h-52 bg-slate-100 overflow-hidden">
+            <img src="${room.image}" alt="${room.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+            <div class="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+              <span class="bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                ${room.locality}
+              </span>
+              ${room.featured ? '<span class="bg-amber-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md">Featured</span>' : ''}
+            </div>
+            <button onclick="toggleSave('${room.id}', event)" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-700 hover:text-rose-600 transition shadow-sm">
+              <i data-lucide="heart" class="w-4 h-4 ${isSaved ? 'text-rose-500 fill-rose-500' : ''}"></i>
+            </button>
+          </div>
+
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-baseline justify-between gap-2">
+                <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">${room.type} • ${room.tenant}</div>
+                <div class="text-right">
+                  <span class="text-base font-extrabold text-teal-600">₹${room.rent.toLocaleString('en-IN')}</span>
+                  <span class="text-[10px] text-slate-400 block -mt-1">/month</span>
+                </div>
+              </div>
+
+              <h3 class="font-bold text-slate-800 text-sm mt-1 leading-snug group-hover:text-teal-600 transition line-clamp-1">
+                ${room.title}
+              </h3>
+              
+              <p class="text-xs text-slate-500 mt-1 flex items-center gap-1 line-clamp-1">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-teal-600 shrink-0"></i>
+                ${room.address}
+              </p>
+
+              <div class="flex flex-wrap gap-1 mt-3">
+                ${room.tags.slice(0, 3).map(tag => `<span class="bg-slate-100 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded-md">${tag}</span>`).join('')}
+                ${room.tags.length > 3 ? `<span class="bg-slate-100 text-slate-400 text-[10px] px-1.5 py-0.5 rounded-md">+${room.tags.length - 3}</span>` : ''}
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+              <a href="https://wa.me/91${room.ownerPhone}?text=${encodeURIComponent('Hello, I saw your room listing on DibruNest: ' + room.title + ' in ' + room.locality + '. Is it still available?')}" 
+                 target="_blank" onclick="event.stopPropagation()"
+                 class="flex-1 py-1.5 px-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition">
+                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                WhatsApp
+              </a>
+              <button onclick="openModal('${room.id}'); event.stopPropagation();"
+                class="flex-1 py-1.5 px-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1 transition">
+                View Details
+              </button>
+            </div>
+          </div>
+        `;
+
+        roomGrid.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // --- MODAL CONTROLLER ---
+    function openModal(id) {
+      const room = roomsData.find(r => r.id === id);
+      if (!room) return;
+
+      document.getElementById('modalMainImg').src = room.image;
+      document.getElementById('modalTitle').textContent = room.title;
+      document.getElementById('modalLocalityBadge').textContent = room.locality;
+      document.getElementById('modalAddress').innerHTML = `<i data-lucide="map-pin" class="w-3.5 h-3.5 text-teal-600 shrink-0"></i> <span>${room.address}</span>`;
+      document.getElementById('modalRent').textContent = `₹${room.rent.toLocaleString('en-IN')}`;
+      document.getElementById('modalType').textContent = room.type;
+      document.getElementById('modalTenant').textContent = room.tenant;
+      document.getElementById('modalDeposit').textContent = room.deposit;
+      document.getElementById('modalDesc').textContent = room.desc;
+      document.getElementById('modalNotesText').textContent = room.notes;
+
+      // WhatsApp & Call URLs
+      const waMsg = encodeURIComponent(`Hello, I saw your listing on DibruNest: "${room.title}" at ${room.locality} (₹${room.rent}/mo). Is it available for visit?`);
+      document.getElementById('modalWhatsappBtn').href = `https://wa.me/91${room.ownerPhone}?text=${waMsg}`;
+      document.getElementById('modalCallBtn').href = `tel:+91${room.ownerPhone}`;
+
+      // Tags
+      const tagsContainer = document.getElementById('modalTags');
+      tagsContainer.innerHTML = room.tags.map(t => `<span class="bg-teal-50 text-teal-700 border border-teal-200/50 text-xs font-medium px-2.5 py-1 rounded-lg">${t}</span>`).join('');
+
+      // Store active gallery state for Carousel & Thumbnails
+      activeGallery = room.gallery && room.gallery.length > 0 ? room.gallery : [{ url: room.image, label: "Main Room" }];
+      activeGalleryIndex = 0;
+      updateModalPhoto();
+
+      document.getElementById('detailModal').classList.remove('hidden');
+      document.getElementById('detailModal').classList.add('flex');
+      lucide.createIcons();
+    }
+
+    let activeGallery = [];
+    let activeGalleryIndex = 0;
+
+    function setModalPhoto(index) {
+      if (!activeGallery || activeGallery.length === 0) return;
+      activeGalleryIndex = (index + activeGallery.length) % activeGallery.length;
+      updateModalPhoto();
+    }
+
+    function prevModalPhoto(event) {
+      if (event) event.stopPropagation();
+      setModalPhoto(activeGalleryIndex - 1);
+    }
+
+    function nextModalPhoto(event) {
+      if (event) event.stopPropagation();
+      setModalPhoto(activeGalleryIndex + 1);
+    }
+
+    function updateModalPhoto() {
+      if (!activeGallery || activeGallery.length === 0) return;
+      const currentItem = activeGallery[activeGalleryIndex];
+      const mainImg = document.getElementById('modalMainImg');
+      
+      // Update main photo with smooth fade
+      mainImg.style.opacity = '0.5';
+      mainImg.src = currentItem.url;
+      mainImg.onload = () => { mainImg.style.opacity = '1'; };
+      mainImg.onerror = () => { mainImg.style.opacity = '1'; };
+
+      // Update photo counter
+      document.getElementById('modalPhotoCounter').textContent = `Photo ${activeGalleryIndex + 1} of ${activeGallery.length} • ${currentItem.label}`;
+
+      // Render Visual Thumbnail Strip
+      const thumbContainer = document.getElementById('modalThumbnails');
+      thumbContainer.innerHTML = '';
+
+      activeGallery.forEach((item, idx) => {
+        const isSelected = idx === activeGalleryIndex;
+        const thumbBtn = document.createElement('button');
+        thumbBtn.className = `flex-shrink-0 flex flex-col items-center gap-1 p-1 rounded-xl transition border-2 ${
+          isSelected 
+            ? 'border-teal-600 bg-teal-50 shadow-md ring-2 ring-teal-500/20' 
+            : 'border-slate-200 bg-white hover:border-slate-300 opacity-70 hover:opacity-100'
+        }`;
+        thumbBtn.onclick = (e) => {
+          e.stopPropagation();
+          setModalPhoto(idx);
+        };
+
+        thumbBtn.innerHTML = `
+          <div class="w-16 h-12 rounded-lg overflow-hidden bg-slate-200">
+            <img src="${item.url}" alt="${item.label}" class="w-full h-full object-cover">
+          </div>
+          <span class="text-[10px] font-bold px-1 ${isSelected ? 'text-teal-800' : 'text-slate-600'} truncate max-w-[70px]">
+            ${item.label}
+          </span>
+        `;
+        thumbContainer.appendChild(thumbBtn);
+      });
+
+      // Show or hide arrows if only 1 photo
+      const prevBtn = document.getElementById('modalPrevBtn');
+      const nextBtn = document.getElementById('modalNextBtn');
+      if (activeGallery.length <= 1) {
+        prevBtn.classList.add('hidden');
+        nextBtn.classList.add('hidden');
+      } else {
+        prevBtn.classList.remove('hidden');
+        nextBtn.classList.remove('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+      document.getElementById('detailModal').classList.remove('flex');
+    }
+
+    // Close on backdrop click
+    document.getElementById('detailModal').addEventListener('click', (e) => {
+      if (e.target.id === 'detailModal') closeModal();
+    });
+
+    // Reset filters
+    function resetFilters() {
+      searchInput.value = '';
+      typeSelect.value = 'all';
+      tenantSelect.value = 'all';
+      priceSlider.value = 20000;
+      sortSelect.value = 'featured';
+      showSavedOnly = false;
+      const navBtn = document.getElementById('wishlistNavBtn');
+      navBtn.classList.remove('bg-rose-50', 'border-rose-300', 'text-rose-700');
+      applyFilters();
+    }
+
+    // Event listeners
+    searchInput.addEventListener('input', applyFilters);
+    typeSelect.addEventListener('change', applyFilters);
+    tenantSelect.addEventListener('change', applyFilters);
+    priceSlider.addEventListener('input', applyFilters);
+
+    // Initial Execution
+    updateSavedCounter();
+    applyFilters();
+  </script>
+</body>
+</html>
